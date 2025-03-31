@@ -5,5 +5,5 @@
 
 # .env:
 ```
-BOT_API_KEY: 'string'
+TELEGRAM_BOT_TOKEN: 'string'
 ```
