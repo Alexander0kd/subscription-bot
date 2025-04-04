@@ -14,11 +14,11 @@ async def set_bot_commands(bot: Bot):
     commands = [
         BotCommand(
             command="/start",
-            description=localize_text('commands.start')
+            description=localize_text('commands.start.title')
         ),
         BotCommand(
             command="/join",
-            description=localize_text('commands.join')
+            description=localize_text('commands.join.title')
         ),
     ]
 

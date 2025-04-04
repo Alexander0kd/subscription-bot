@@ -1,13 +1,14 @@
+from config import TELEGRAM_BOT_TOKEN
+
+import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from bot.config import set_bot_commands
-from config.settings import TELEGRAM_BOT_TOKEN
-
-from bot.handlers import routers
-import asyncio
+from .config import set_bot_commands
+from .handlers import routers as handler_routers
+from .services import routers as handler_services
 
 class TelegramBot:
     def __init__(self):
@@ -28,7 +29,9 @@ class TelegramBot:
 
     async def _register_routers(self):
         """Реєстрація всіх роутерів"""
-        for router in routers:
+        for router in handler_routers:
+            self.dp.include_router(router)
+        for router in handler_services:
             self.dp.include_router(router)
 
     async def _on_startup(self):

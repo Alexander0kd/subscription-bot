@@ -1,3 +1,5 @@
+from aiogram.fsm.context import FSMContext
+
 from translation import localize_text
 from aiogram import Router, types, F
 from bot.keyboards import (
@@ -6,11 +8,14 @@ from bot.keyboards import (
 
 router = Router()
 
-@router.callback_query(F.data == "back")
-async def callback_joined_menu(callback: types.CallbackQuery):
-    """Кнопка joined"""
+@router.callback_query(F.data == "cancel")
+async def callback_cancel(callback: types.CallbackQuery, state: FSMContext):
+    """Кнопка Cancel"""
+    await state.clear()
+
     await callback.message.answer(
-        localize_text('Мої підписки'),
+        localize_text('messages.canceled'),
         reply_markup=get_main_keyboard()
     )
+
     await callback.answer()

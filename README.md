@@ -6,5 +6,10 @@
 
 # .env:
 ```
-TELEGRAM_BOT_TOKEN: 'string'
+DEFAULT_LANGUAGE='string'; 'ua'
+
+MONGO_URI='string'; 'mongodb://localhost:27017'
+MONGO_DB_NAME='string'; 'subscription_bot'
+
+TELEGRAM_BOT_TOKEN='string'
 ```

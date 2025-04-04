@@ -1,0 +1,8 @@
+from .settings import DEFAULT_LANGUAGE, MONGO_URI, MONGO_DB_NAME, TELEGRAM_BOT_TOKEN
+
+__all__ = [
+    'DEFAULT_LANGUAGE',
+    'MONGO_URI',
+    'MONGO_DB_NAME',
+    'TELEGRAM_BOT_TOKEN',
+]

@@ -9,6 +9,7 @@ from aiogram.types import (
     KeyboardButton, ReplyKeyboardRemove
 )
 
+__all__ = ['build_inline_keyboard', 'build_reply_keyboard']
 
 def build_inline_keyboard(
         buttons: List[Dict[str, Union[str, Dict]]],

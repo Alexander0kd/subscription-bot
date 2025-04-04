@@ -2,7 +2,7 @@ import os
 import json
 from functools import lru_cache
 from typing import Dict, Any, Optional, Union
-from config.settings import DEFAULT_LANGUAGE
+from config import DEFAULT_LANGUAGE
 
 # Змінна для зберігання поточної мови
 CURRENT_LANGUAGE = DEFAULT_LANGUAGE
