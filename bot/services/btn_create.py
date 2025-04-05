@@ -7,7 +7,8 @@ from bot.keyboards import get_cancel_keyboard, get_period_create_keyboard, get_c
 from config.settings import DAYS_IN_SUBSCRIPTION_MONTH
 from db.crud.group_crud import create_group_with_custom_join_id
 from db.models import PaymentPeriod, PaymentMethod, GroupModel
-from db.utils import generate_join_id, get_displayed_date
+from utils import get_displayed_date
+from db.utils import generate_join_id
 from translation import localize_text
 from aiogram import types, Router, F
 from aiogram.fsm.context import FSMContext

@@ -3,7 +3,7 @@ from aiogram import types
 from bot.keyboards import get_admin_group_keyboard
 from db.crud import get_by_owner
 from db.models import PaymentStatus
-from db.utils import get_displayed_date
+from utils import get_displayed_date
 from translation import localize_text
 
 

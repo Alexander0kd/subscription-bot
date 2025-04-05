@@ -2,7 +2,7 @@ from aiogram import types
 
 from bot.keyboards import get_user_group_keyboard
 from db.crud import get_by_member
-from db.utils import get_displayed_date
+from utils import get_displayed_date
 from translation import localize_text
 
 
