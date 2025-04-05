@@ -3,8 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Translation
+# Global
 DEFAULT_LANGUAGE: str = os.getenv("TELEGRAM_DEFAULT_LANGUAGE", "ua")
+DAYS_IN_SUBSCRIPTION_MONTH: int = int(os.getenv("DAYS_IN_SUBSCRIPTION_MONTH", 28))
 
 # MongoDB
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")

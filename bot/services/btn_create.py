@@ -4,9 +4,10 @@ from aiogram.types import CallbackQuery
 
 from bot.keyboards import get_cancel_keyboard, get_period_create_keyboard, get_confirm_keyboard, \
     get_order_create_keyboard, get_main_keyboard
+from config.settings import DAYS_IN_SUBSCRIPTION_MONTH
 from db.crud.group_crud import create_group_with_custom_join_id
 from db.models import PaymentPeriod, PaymentMethod, GroupModel
-from db.utils import generate_join_id
+from db.utils import generate_join_id, get_displayed_date
 from translation import localize_text
 from aiogram import types, Router, F
 from aiogram.fsm.context import FSMContext
@@ -115,13 +116,7 @@ async def process_payment_date(message: types.Message, state: FSMContext):
             elif period == PaymentPeriod.WEEKLY:
                 next_payment_date = now + timedelta(weeks=1)
             elif period == PaymentPeriod.MONTHLY:
-                month = now.month + 1
-                year = next_payment_date.year
-                if month > 12:
-                    month = 1
-                    year += 1
-
-                next_payment_date = next_payment_date.replace(year=year, month=month, day=next_payment_date.day)
+                next_payment_date = now + timedelta(days=DAYS_IN_SUBSCRIPTION_MONTH)
 
         await state.update_data(payment_date=next_payment_date)
 
@@ -138,6 +133,7 @@ async def process_payment_date(message: types.Message, state: FSMContext):
 async def process_group_comment(message: types.Message, state: FSMContext):
     """Обробка коментаря та завершення створення групи"""
     await state.update_data(comment=message.text)
+    await state.update_data(join_id=generate_join_id())
 
     group = await get_localized_group(state)
     result = localize_text('messages.confirm_create', group=group)
@@ -150,7 +146,6 @@ async def process_group_comment(message: types.Message, state: FSMContext):
 async def confirm_create(callback: CallbackQuery, state: FSMContext):
     """Обробка вибору періоду оплати з кнопок"""
     try:
-        await state.update_data(join_id=generate_join_id())
         data = await state.get_data()
 
         username = callback.from_user.username
@@ -167,7 +162,7 @@ async def confirm_create(callback: CallbackQuery, state: FSMContext):
                 "payment_period": PaymentPeriod[data.get("period", "MONTHLY").upper()],
                 "payment_method": PaymentMethod[data.get("method", "EACH_USER").upper()],
                 "next_payment_date": data.get("payment_date"),
-                "join_id": data['join_id'],
+                "join_id": data.get('join_id'),
         })
 
         res_id = await create_group_with_custom_join_id(obj)
@@ -205,7 +200,7 @@ async def get_localized_group(state: FSMContext) -> str:
     return localize_text(
         'messages.group_admin',
         name=data['name'],
-        date=data['payment_date'].strftime('%d.%m'),
+        date=get_displayed_date(data['payment_date']),
         user_count='1',
         sum=data['amount'],
         status='1/1',

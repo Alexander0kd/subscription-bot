@@ -27,10 +27,20 @@ async def error_handler(event: ErrorEvent):
 
     # Обробка специфічних помилок
     if isinstance(error, TelegramBadRequest):
+        if error.message.find('chat not found'):
+            return await handle_chat_not_found_error(message)
         return await handle_general_error(message)
 
     # Загальна помилка
     return await handle_general_error(message)
+
+
+async def handle_chat_not_found_error(message: Message):
+    """Обробка помилок запиту"""
+    await message.answer(
+        localize_text('errors.chat_not_found'),
+        reply_markup=get_main_keyboard()
+    )
 
 
 async def handle_general_error(message: Message):

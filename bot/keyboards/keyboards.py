@@ -1,4 +1,4 @@
-from db.models import PaymentPeriod
+from db.models import PaymentPeriod, PaymentStatus
 from translation import localize_text
 
 from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup
@@ -33,10 +33,10 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
         row_width=2
     )
 
-def get_user_group_keyboard(payed: bool, group_id: str) -> InlineKeyboardMarkup:
+def get_user_group_keyboard(status: PaymentStatus, group_id: str) -> InlineKeyboardMarkup:
     """Повертає клавіатуру з кнопками 'Відмитити як оплачену' та 'Покинути групу'"""
     buttons = []
-    if payed:
+    if status == PaymentStatus.UNPAID:
         buttons.append({
             "text": "buttons.mark_as_payed",
             "callback_data": f"mark_as_payed:{group_id}"
@@ -191,7 +191,7 @@ def get_order_settings_keyboard(group_id: str) -> InlineKeyboardMarkup:
     )
 
 
-def get_group_members_keyboard(payed: bool, user_id: str, group_id: str) -> InlineKeyboardMarkup:
+def get_group_members_keyboard(payed: bool, user_id: int, group_id: str) -> InlineKeyboardMarkup:
     """Повертає клавіатуру з кнопками 'change_status', 'change_payment_date' та 'remove_member'"""
     status_text = localize_text('buttons.change_status', status="payed" if payed else "unpaid")
     return build_inline_keyboard(
@@ -213,17 +213,17 @@ def get_group_members_keyboard(payed: bool, user_id: str, group_id: str) -> Inli
     )
 
 
-def get_admin_join_keyboard() -> InlineKeyboardMarkup:
+def get_admin_join_keyboard(user_id: int, group_id: str) -> InlineKeyboardMarkup:
     """Повертає клавіатуру з кнопками 'Відхилити' та 'Додати'"""
     return build_inline_keyboard(
         buttons=[
             {
                 "text": "buttons.reject",
-                "callback_data": "reject"
+                "callback_data": f"reject:{group_id}:{user_id}"
             },
             {
                 "text": "buttons.approve",
-                "callback_data": "approve"
+                "callback_data": f"approve:{group_id}:{user_id}"
             }
         ],
         row_width=2
@@ -273,7 +273,7 @@ def get_mark_as_paid_keyboard(group_id: str) -> InlineKeyboardMarkup:
     )
 
 
-def get_confirm_payed_keyboard(user_id: str, group_id: str) -> InlineKeyboardMarkup:
+def get_confirm_payed_keyboard(user_id: int, group_id: str) -> InlineKeyboardMarkup:
     """Повертає клавіатуру з кнопками 'Підтвердити'"""
     return build_inline_keyboard(
         buttons=[
@@ -286,7 +286,7 @@ def get_confirm_payed_keyboard(user_id: str, group_id: str) -> InlineKeyboardMar
     )
 
 
-def get_remove_member_keyboard(user_id: str, group_id: str) -> InlineKeyboardMarkup:
+def get_remove_member_keyboard(user_id: int, group_id: str) -> InlineKeyboardMarkup:
     """Повертає клавіатуру з кнопками 'Видалити учасника'"""
     return build_inline_keyboard(
         buttons=[

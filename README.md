@@ -6,6 +6,7 @@
 
 # .env:
 ```
+DAYS_IN_SUBSCRIPTION_MONTH='int'; 28
 DEFAULT_LANGUAGE='string'; 'ua'
 
 MONGO_URI='string'; 'mongodb://localhost:27017'

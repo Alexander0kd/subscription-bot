@@ -60,3 +60,25 @@ async def get_by_owner(owner_id: int) -> List[GroupModel]:
     """Отримати групи за власником"""
     group_data = db[COLLECTION_NAME].find({"owner_id": owner_id})
     return [GroupModel.from_dict(dict(g)) for g in group_data]
+
+
+async def get_by_member(member_id: int) -> List[GroupModel]:
+    """Отримати групи за учасником"""
+    group_data = db[COLLECTION_NAME].find({
+        "members.user_id": member_id,
+        "owner_id": {"$ne": member_id}
+    })
+
+    converted = [GroupModel.from_dict(dict(g)) for g in group_data]
+
+    result = []
+    for group in converted:
+        members = group.members or []
+
+        main_member = [m for m in members if m.user_id == member_id]
+        other_members = [m for m in members if m.user_id != member_id]
+
+        group.members = main_member + other_members
+        result.append(group)
+
+    return result

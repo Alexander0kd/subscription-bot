@@ -1,6 +1,6 @@
 from db.crud import get_group_by_join_id
 from translation import localize_text
-from bot.keyboards import get_main_keyboard
+from bot.keyboards import get_main_keyboard, get_admin_join_keyboard
 from aiogram import types
 
 
@@ -23,17 +23,15 @@ async def handle_join(message: types.Message):
 
 
     if group.owner_id:
-        if group.owner_id == message.from_user.id:
+        can_join = not(any(member.user_id == message.from_user.id for member in group.members) or
+                     group.owner_id == message.from_user.id)
+
+        if not can_join:
             await message.answer(
                 localize_text('commands.join.restrict'),
                 reply_markup=get_main_keyboard()
             )
             return
-
-        await message.answer(
-            localize_text('commands.join.wait', name=group.name),
-            reply_markup=get_main_keyboard()
-        )
 
         username = message.from_user.username
         full_name = message.from_user.full_name
@@ -42,7 +40,13 @@ async def handle_join(message: types.Message):
 
         await message.bot.send_message(
             chat_id=group.owner_id,
-            text=localize_text('commands.join.request', name=group.name, user=owner_tag)
+            text=localize_text('commands.join.request', name=group.name, user=owner_tag),
+            reply_markup=get_admin_join_keyboard(user_id, join_id)
+        )
+
+        await message.answer(
+            localize_text('commands.join.wait', name=group.name),
+            reply_markup=get_main_keyboard()
         )
     else:
         await message.answer(
