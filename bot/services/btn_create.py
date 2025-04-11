@@ -7,7 +7,7 @@ from bot.keyboards import get_cancel_keyboard, get_period_create_keyboard, get_c
 from config.settings import DAYS_IN_SUBSCRIPTION_MONTH
 from db.crud.group_crud import create_group_with_custom_join_id
 from db.models import PaymentPeriod, PaymentMethod, GroupModel
-from utils import get_displayed_date
+from utils import get_displayed_date, get_period_delta
 from db.utils import generate_join_id
 from translation import localize_text
 from aiogram import types, Router, F
@@ -154,15 +154,24 @@ async def confirm_create(callback: CallbackQuery, state: FSMContext):
         user_id = callback.from_user.id
         owner_tag = f"@{username}" if username else full_name or str(user_id)
 
+        current_payment_date = data.get("payment_date")
+
+        payment_period_key = data.get("period", "MONTHLY").upper(),
+        payment_period = PaymentPeriod[payment_period_key[0]]
+        period_delta = get_period_delta(payment_period)
+
+        next_payment_date: datetime = data.get("payment_date") + period_delta
+
         obj: GroupModel = GroupModel.from_dict({
                 "name": data["name"],
                 "owner_id": int(callback.from_user.id),
                 "owner_tag": owner_tag,
                 "description": data.get("comment"),
                 "amount": float(data.get("amount", 0)),
-                "payment_period": PaymentPeriod[data.get("period", "MONTHLY").upper()],
+                "payment_period": payment_period,
                 "payment_method": PaymentMethod[data.get("method", "EACH_USER").upper()],
-                "next_payment_date": data.get("payment_date"),
+                "current_payment_date": current_payment_date,
+                "next_payment_date": next_payment_date,
                 "join_id": data.get('join_id'),
         })
 
@@ -202,9 +211,9 @@ async def get_localized_group(state: FSMContext) -> str:
         'messages.group_admin',
         name=data['name'],
         date=get_displayed_date(data['payment_date']),
-        user_count='1',
+        user_count='0',
         sum=data['amount'],
-        status='1/1',
+        status='0/0',
         period=localize_text(f"buttons.{data['period']}"),
         period_order=localize_text(f"buttons.{data['period_order']}"),
         comment=data['comment'],

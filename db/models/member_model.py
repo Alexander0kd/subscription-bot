@@ -10,12 +10,14 @@ class MemberModel:
     def __init__(
             self,
             user_id: int,
+            user_tag: str,
             last_payment_date: Optional[datetime],
             status: PaymentStatus,
             joined_at: datetime,
             _id: Optional[Union[str, ObjectId]] = None
     ):
         self.user_id = user_id
+        self.user_tag = user_tag
         self.last_payment_date = last_payment_date
         self.status = status or PaymentStatus.UNPAID
         self.joined_at = joined_at or datetime.now()
@@ -47,6 +49,7 @@ class MemberModel:
         """Convert the model to a dictionary for database storage"""
         result = {
             'user_id': self.user_id,
+            'user_tag': self.user_tag,
             'last_payment_date': self.last_payment_date,
             'status': self.status.value if isinstance(self.status, PaymentStatus) else self.status,
             'joined_at': self.joined_at,
@@ -59,7 +62,7 @@ class MemberModel:
 
     def __str__(self) -> str:
         """String representation of the group"""
-        return f"Member(id={self.user_id}, last_payment_date={self.last_payment_date}, status={self.status}, joined_at={self.joined_at})"
+        return f"Member(id={self.user_id}, user_tag={self.user_tag}, last_payment_date={self.last_payment_date}, status={self.status}, joined_at={self.joined_at})"
 
-def get_default_member(user_id: int) -> MemberModel:
-    return MemberModel(user_id=user_id, last_payment_date=None, status=PaymentStatus.UNPAID, joined_at=datetime.now())
+def get_default_member(user_id: int, user_tag: str) -> MemberModel:
+    return MemberModel(user_id=user_id, user_tag=user_tag, last_payment_date=None, status=PaymentStatus.UNPAID, joined_at=datetime.now())

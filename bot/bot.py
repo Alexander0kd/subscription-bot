@@ -20,13 +20,6 @@ class TelegramBot:
         self.dp = Dispatcher(storage=self.storage)
         print("Bot inited!")
 
-    async def _setup_middlewares(self):
-        """Налаштування middleware"""
-        # self.dp.update.middleware.register(DatabaseMiddleware())
-        # self.dp.update.middleware.register(UserMiddleware())
-        # self.dp.message.middleware.register(ThrottlingMiddleware())
-        # self.dp.callback_query.middleware.register(ThrottlingMiddleware())
-
     async def _register_routers(self):
         """Реєстрація всіх роутерів"""
         for router in handler_routers:
@@ -44,7 +37,6 @@ class TelegramBot:
 
     async def start(self):
         """Запуск бота"""
-        await self._setup_middlewares()
         await self._register_routers()
 
         self.dp.startup.register(self._on_startup)

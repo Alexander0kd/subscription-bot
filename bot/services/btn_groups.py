@@ -34,7 +34,7 @@ def get_localized_group_admin(group) -> str:
     return localize_text(
         'messages.group_admin',
         name=group.name,
-        date=get_displayed_date(group.next_payment_date),
+        date=get_displayed_date(group.current_payment_date),
         user_count=user_count,
         sum=group.amount,
         status=status,

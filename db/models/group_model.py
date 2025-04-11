@@ -2,10 +2,10 @@ from typing import List, Dict, Optional, Union, Any
 from datetime import datetime
 from bson import ObjectId
 
-from config.settings import DAYS_IN_SUBSCRIPTION_MONTH
 from db.models import PaymentPeriod, PaymentMethod
 from db.models.member_model import MemberModel, get_default_member
 from db.utils import generate_join_id
+from utils import get_period_delta
 
 
 class GroupModel:
@@ -20,6 +20,7 @@ class GroupModel:
             amount: float = 0.0,
             payment_period: PaymentPeriod = PaymentPeriod.MONTHLY,
             payment_method: PaymentMethod = PaymentMethod.EACH_USER,
+            current_payment_date: Optional[datetime] = None,
             next_payment_date: Optional[datetime] = None,
             members: Optional[List[MemberModel]] = None,
             created_at: Optional[datetime] = None,
@@ -33,11 +34,13 @@ class GroupModel:
         self.amount = amount
         self.payment_period = payment_period
         self.payment_method = payment_method
+        self.current_payment_date = current_payment_date or datetime.now()
         self.next_payment_date = next_payment_date or datetime.now()
-        self.members = members or [get_default_member(owner_id)]
+        self.members = members or []
         self.created_at = created_at or datetime.now()
         self.join_id = join_id or generate_join_id()
         self._id = ObjectId(_id) if _id and isinstance(_id, str) else _id
+
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'GroupModel':
@@ -55,6 +58,10 @@ class GroupModel:
             data['payment_method'] = PaymentMethod(payment_method)
 
         # Convert datetime strings if needed
+        current_payment_date = data.get('current_payment_date')
+        if isinstance(current_payment_date, str):
+            data['current_payment_date'] = datetime.fromisoformat(current_payment_date)
+
         next_payment_date = data.get('next_payment_date')
         if isinstance(next_payment_date, str):
             data['next_payment_date'] = datetime.fromisoformat(next_payment_date)
@@ -75,6 +82,7 @@ class GroupModel:
 
         return cls(**data)
 
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert the model to a dictionary for database storage"""
         result = {
@@ -87,7 +95,9 @@ class GroupModel:
                                                                       PaymentPeriod) else self.payment_period,
             'payment_method': self.payment_method.value if isinstance(self.payment_method,
                                                                       PaymentMethod) else self.payment_method,
+            'current_payment_date': self.current_payment_date,
             'next_payment_date': self.next_payment_date,
+
             'members': [m.to_dict() for m in self.members],
             'created_at': self.created_at,
             'join_id': self.join_id
@@ -98,22 +108,15 @@ class GroupModel:
 
         return result
 
+
     def get_next_payment_date(self, user: MemberModel) -> datetime:
         """Calculate the next payment date for a user"""
-        from datetime import timedelta
         import hashlib
-
-        def get_period_delta(period: PaymentPeriod) -> timedelta:
-            return {
-                PaymentPeriod.DAILY: timedelta(days=1),
-                PaymentPeriod.WEEKLY: timedelta(weeks=1),
-                PaymentPeriod.MONTHLY: timedelta(days=DAYS_IN_SUBSCRIPTION_MONTH),
-            }[period]
 
         period_delta = get_period_delta(self.payment_period)
 
         if self.payment_method == PaymentMethod.EACH_USER:
-            return self.next_payment_date
+            return self.current_payment_date
 
         elif self.payment_method in [PaymentMethod.TURN_JOIN_DATE, PaymentMethod.TURN_RANDOM]:
             members = list(self.members)
@@ -130,12 +133,13 @@ class GroupModel:
             try:
                 index = next(i for i, m in enumerate(members) if m.user_id == user.user_id)
             except StopIteration:
-                return self.next_payment_date
+                return self.current_payment_date
 
-            base_date = self.next_payment_date
+            base_date = self.current_payment_date
             return base_date + index * period_delta
 
-        return self.next_payment_date
+        return self.current_payment_date
+
 
     def __str__(self) -> str:
         """String representation of the group"""

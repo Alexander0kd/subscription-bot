@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import Optional, List
 from pymongo.errors import PyMongoError
 from pymongo.results import InsertOneResult
 
+from db.models import PaymentStatus
 from db.models.group_model import GroupModel
 from db import get_db
 
@@ -82,3 +84,28 @@ async def get_by_member(member_id: int) -> List[GroupModel]:
         result.append(group)
 
     return result
+
+
+async def leave_group(group: GroupModel, user_id: int):
+    group.members = [member for member in group.members if member.user_id != user_id]
+    await update_group(group)
+
+
+async def mark_payment(group: GroupModel, user_id: int):
+    group.members.sort(key=lambda m: 0 if m.user_id == user_id else 1)
+    if group.members and len(group.members) > 0:
+        group.members[0].status = PaymentStatus.PAID
+        group.members[0].last_payment_date = datetime.now()
+
+    await update_group(group)
+
+
+async def update_group(group: GroupModel):
+   db[COLLECTION_NAME].update_one(
+        {"join_id": group.join_id},
+        {"$set": group.to_dict()}
+    )
+
+
+async def delete_group(group: GroupModel):
+    db[COLLECTION_NAME].delete_one({"join_id": group.join_id})

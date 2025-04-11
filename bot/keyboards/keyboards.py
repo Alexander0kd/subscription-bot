@@ -10,15 +10,12 @@ __all__ = [
     'get_admin_group_keyboard',
     'get_admin_settings_keyboard',
     'get_period_create_keyboard',
-    'get_period_settings_keyboard',
     'get_order_create_keyboard',
-    'get_order_settings_keyboard',
     'get_group_members_keyboard',
     'get_admin_join_keyboard',
     'get_confirm_keyboard',
     'get_cancel_keyboard',
     'get_mark_as_paid_keyboard',
-    'get_confirm_payed_keyboard',
     'get_remove_member_keyboard'
 ]
 
@@ -79,20 +76,16 @@ def get_admin_settings_keyboard(group_id: str) -> InlineKeyboardMarkup:
     return build_inline_keyboard(
         buttons=[
             {
-                "text": "buttons.change_date",
-                "callback_data": f"change_date:{group_id}"
-            },
-            {
                 "text": "buttons.change_amount",
                 "callback_data": f"change_amount:{group_id}"
             },
             {
-                "text": "buttons.change_payment_period",
-                "callback_data": f"change_payment_period:{group_id}"
-            },
-            {
                 "text": "buttons.change_comment",
                 "callback_data": f"change_comment:{group_id}"
+            },
+            {
+                "text": "buttons.back",
+                "callback_data": f"back:{group_id}"
             }
         ],
         row_width=1
@@ -124,27 +117,6 @@ def get_period_create_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def get_period_settings_keyboard(group_id: str) -> InlineKeyboardMarkup:
-    """Повертає клавіатуру з кнопками 'daily', 'weekly' та 'monthly'"""
-    return build_inline_keyboard(
-        buttons=[
-            {
-                "text": "buttons.daily",
-                "callback_data": f"{PaymentPeriod.DAILY}:{group_id}"
-            },
-            {
-                "text": "buttons.weekly",
-                "callback_data": f"{PaymentPeriod.WEEKLY}:{group_id}"
-            },
-            {
-                "text": "buttons.monthly",
-                "callback_data": f"{PaymentPeriod.MONTHLY}:{group_id}"
-            }
-        ],
-        row_width=1
-    )
-
-
 def get_order_create_keyboard() -> InlineKeyboardMarkup:
     """Повертає клавіатуру з кнопками 'from_each_user', 'in_turn_randomly' та 'in_turn_by_join_date'"""
     return build_inline_keyboard(
@@ -170,39 +142,15 @@ def get_order_create_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def get_order_settings_keyboard(group_id: str) -> InlineKeyboardMarkup:
-    """Повертає клавіатуру з кнопками 'from_each_user', 'in_turn_randomly' та 'in_turn_by_join_date'"""
-    return build_inline_keyboard(
-        buttons=[
-            {
-                "text": "buttons.from_each_user",
-                "callback_data": f"from_each_user:{group_id}"
-            },
-            {
-                "text": "buttons.in_turn_randomly",
-                "callback_data": f"in_turn_randomly:{group_id}"
-            },
-            {
-                "text": "buttons.in_turn_by_join_date",
-                "callback_data": f"in_turn_by_join_date:{group_id}"
-            }
-        ],
-        row_width=1
-    )
-
-
 def get_group_members_keyboard(payed: bool, user_id: int, group_id: str) -> InlineKeyboardMarkup:
-    """Повертає клавіатуру з кнопками 'change_status', 'change_payment_date' та 'remove_member'"""
-    status_text = localize_text('buttons.change_status', status="payed" if payed else "unpaid")
+    """Повертає клавіатуру з кнопками 'change_status' та 'remove_member'"""
+    status_text = localize_text('buttons.change_status', status=localize_text("buttons.unpaid") if payed else localize_text("buttons.paid"))
+
     return build_inline_keyboard(
         buttons=[
             {
                 "text": status_text,
                 "callback_data": f"change_status:{group_id}:{user_id}"
-            },
-            {
-                "text": "buttons.change_payment_date",
-                "callback_data": f"change_payment_date:{group_id}:{user_id}"
             },
             {
                 "text": "buttons.remove_member",
@@ -273,19 +221,6 @@ def get_mark_as_paid_keyboard(group_id: str) -> InlineKeyboardMarkup:
     )
 
 
-def get_confirm_payed_keyboard(user_id: int, group_id: str) -> InlineKeyboardMarkup:
-    """Повертає клавіатуру з кнопками 'Підтвердити'"""
-    return build_inline_keyboard(
-        buttons=[
-            {
-                "text": "buttons.confirm",
-                "callback_data": f"confirm:{group_id}:{user_id}"
-            }
-        ],
-        row_width=1
-    )
-
-
 def get_remove_member_keyboard(user_id: int, group_id: str) -> InlineKeyboardMarkup:
     """Повертає клавіатуру з кнопками 'Видалити учасника'"""
     return build_inline_keyboard(
@@ -297,3 +232,4 @@ def get_remove_member_keyboard(user_id: int, group_id: str) -> InlineKeyboardMar
         ],
         row_width=1
     )
+
