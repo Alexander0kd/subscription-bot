@@ -48,6 +48,10 @@
         "reject": "Відхилити"
     },
     "messages": {
+        "enter_new_amount": "Введіть нову суму:",
+        "enter_new_comment": "Введіть новий коментар:",
+        "join_approved": "Вашу заявку у групу \"{group}\" прийнято!",
+        "done": "Виконано",
         "never": "Ніколи",
         "members_not_found": "Нажаль, учасників немає",
         "deleted": "Видалено",

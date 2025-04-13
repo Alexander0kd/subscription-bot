@@ -91,11 +91,17 @@ async def leave_group(group: GroupModel, user_id: int):
     await update_group(group)
 
 
-async def mark_payment(group: GroupModel, user_id: int):
+async def mark_payment(group: GroupModel, user_id: int, toggle: bool = False):
     group.members.sort(key=lambda m: 0 if m.user_id == user_id else 1)
+
     if group.members and len(group.members) > 0:
-        group.members[0].status = PaymentStatus.PAID
-        group.members[0].last_payment_date = datetime.now()
+        if toggle:
+            group.members[0].status = (
+                PaymentStatus.UNPAID if group.members[0].status == PaymentStatus.PAID else PaymentStatus.PAID
+            )
+        else:
+            group.members[0].status = PaymentStatus.PAID
+            group.members[0].last_payment_date = datetime.now()
 
     await update_group(group)
 

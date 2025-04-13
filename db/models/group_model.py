@@ -2,7 +2,7 @@ from typing import List, Dict, Optional, Union, Any
 from datetime import datetime
 from bson import ObjectId
 
-from db.models import PaymentPeriod, PaymentMethod
+from db.models import PaymentPeriod, PaymentMethod, PaymentStatus
 from db.models.member_model import MemberModel, get_default_member
 from db.utils import generate_join_id
 from utils import get_period_delta
@@ -139,6 +139,19 @@ class GroupModel:
             return base_date + index * period_delta
 
         return self.current_payment_date
+
+
+    def add_member(self, user_id: int, user_tag: str):
+        """Add a new member to the group if they don't already exist."""
+
+        def _find_member(find_user_id: int) -> Optional[MemberModel]:
+            """Helper function to find a member by user_id in the members list."""
+            return next((m for m in self.members if m.user_id == find_user_id), None)
+
+        existing_member = _find_member(user_id)
+        if not existing_member:
+            new_member = get_default_member(user_id, user_tag)
+            self.members.append(new_member)
 
 
     def __str__(self) -> str:

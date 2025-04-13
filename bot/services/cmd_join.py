@@ -41,7 +41,7 @@ async def handle_join(message: types.Message):
         await message.bot.send_message(
             chat_id=group.owner_id,
             text=localize_text('commands.join.request', name=group.name, user=owner_tag),
-            reply_markup=get_admin_join_keyboard(user_id, join_id)
+            reply_markup=get_admin_join_keyboard(user_id, join_id, owner_tag)
         )
 
         await message.answer(

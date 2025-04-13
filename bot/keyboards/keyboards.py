@@ -161,7 +161,7 @@ def get_group_members_keyboard(payed: bool, user_id: int, group_id: str) -> Inli
     )
 
 
-def get_admin_join_keyboard(user_id: int, group_id: str) -> InlineKeyboardMarkup:
+def get_admin_join_keyboard(user_id: int, group_id: str, user_tag: str) -> InlineKeyboardMarkup:
     """Повертає клавіатуру з кнопками 'Відхилити' та 'Додати'"""
     return build_inline_keyboard(
         buttons=[
@@ -171,7 +171,7 @@ def get_admin_join_keyboard(user_id: int, group_id: str) -> InlineKeyboardMarkup
             },
             {
                 "text": "buttons.approve",
-                "callback_data": f"approve:{group_id}:{user_id}"
+                "callback_data": f"approve:{group_id}:{user_id}:{user_tag}"
             }
         ],
         row_width=2
