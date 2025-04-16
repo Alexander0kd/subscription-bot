@@ -7,12 +7,10 @@ router = Router()
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message, state: FSMContext):
-    """Обробник команди /start"""
     await state.clear()
     await handle_start(message)
 
 
 @router.message(Command("join"))
 async def cmd_join(message: types.Message):
-    """Обробник команди /join"""
     await handle_join(message)

@@ -3,7 +3,7 @@ from typing import Optional, List
 from pymongo.errors import PyMongoError
 from pymongo.results import InsertOneResult
 
-from db.models import PaymentStatus
+from db.models import PaymentStatus, MemberModel, get_default_member
 from db.models.group_model import GroupModel
 from db import get_db
 
@@ -13,15 +13,6 @@ COLLECTION_NAME = GroupModel.__name__
 
 
 async def get_group_by_join_id(join_id: str) -> Optional[GroupModel]:
-    """
-    Get a group by its ID
-
-    Args:
-        join_id: The ID of the group to get
-
-    Returns:
-        Optional[GroupModel]: The group if found, None otherwise
-    """
     try:
         group_data = db[COLLECTION_NAME].find_one({"join_id": join_id})
         if group_data:
@@ -33,20 +24,7 @@ async def get_group_by_join_id(join_id: str) -> Optional[GroupModel]:
 
 
 async def create_group_with_custom_join_id(group: GroupModel) -> Optional[str]:
-    """
-    Create a new group with a custom join ID
-
-    Args:
-        group: The group to create
-
-    Returns:
-        Optional[str]: The ID of the new group if successful, None otherwise
-
-    Raises:
-        ValueError: If the custom join ID is already in use
-    """
     try:
-        # Check if join_id already exists
         existing = await get_group_by_join_id(group.join_id)
         if existing:
             raise ValueError(f"Join ID '{group.join_id}' is already in use")
@@ -59,16 +37,13 @@ async def create_group_with_custom_join_id(group: GroupModel) -> Optional[str]:
 
 
 async def get_by_owner(owner_id: int) -> List[GroupModel]:
-    """Отримати групи за власником"""
     group_data = db[COLLECTION_NAME].find({"owner_id": owner_id})
     return [GroupModel.from_dict(dict(g)) for g in group_data]
 
 
 async def get_by_member(member_id: int) -> List[GroupModel]:
-    """Отримати групи за учасником"""
     group_data = db[COLLECTION_NAME].find({
-        "members.user_id": member_id,
-        "owner_id": {"$ne": member_id}
+        "members.user_id": member_id
     })
 
     converted = [GroupModel.from_dict(dict(g)) for g in group_data]
@@ -92,7 +67,7 @@ async def leave_group(group: GroupModel, user_id: int):
 
 
 async def mark_payment(group: GroupModel, user_id: int, toggle: bool = False):
-    group.members.sort(key=lambda m: 0 if m.user_id == user_id else 1)
+    group.members = sorted(group.members, key=lambda m: 1 if str(m.user_id) == str(user_id) else 0, reverse=True)
 
     if group.members and len(group.members) > 0:
         if toggle:
@@ -115,3 +90,14 @@ async def update_group(group: GroupModel):
 
 async def delete_group(group: GroupModel):
     db[COLLECTION_NAME].delete_one({"join_id": group.join_id})
+
+
+async def add_member(group: GroupModel, user_id: int, user_tag: str):
+    def _find_member(find_user_id: int) -> Optional[MemberModel]:
+        return next((m for m in group.members if m.user_id == find_user_id), None)
+
+    existing_member = _find_member(user_id)
+    if not existing_member:
+        new_member = get_default_member(user_id, user_tag)
+        group.members.append(new_member)
+        await update_group(group)

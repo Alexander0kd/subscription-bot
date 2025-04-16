@@ -5,8 +5,6 @@ from bson import ObjectId
 from db.models import PaymentStatus
 
 class MemberModel:
-    """Model representing a model as nested class"""
-
     def __init__(
             self,
             user_id: int,
@@ -25,16 +23,12 @@ class MemberModel:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'MemberModel':
-        """Create a MemberModel instance from a dictionary"""
-        # Handle ObjectId conversion
         _id = data.get('_id')
 
-        # Handle enum conversion
         status = data.get('status')
         if isinstance(status, str):
             data['status'] = PaymentStatus(status)
 
-        # Convert datetime strings if needed
         last_payment_date = data.get('last_payment_date')
         if isinstance(last_payment_date, str):
             data['last_payment_date'] = datetime.fromisoformat(last_payment_date)
@@ -46,7 +40,6 @@ class MemberModel:
         return cls(**data)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert the model to a dictionary for database storage"""
         result = {
             'user_id': self.user_id,
             'user_tag': self.user_tag,
@@ -61,7 +54,6 @@ class MemberModel:
         return result
 
     def __str__(self) -> str:
-        """String representation of the group"""
         return f"Member(id={self.user_id}, user_tag={self.user_tag}, last_payment_date={self.last_payment_date}, status={self.status}, joined_at={self.joined_at})"
 
 def get_default_member(user_id: int, user_tag: str) -> MemberModel:

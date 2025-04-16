@@ -29,7 +29,6 @@ class CreateGroupStates(StatesGroup):
 
 
 async def create_group(message: types.Message, state: FSMContext):
-    """Початок створення групи"""
     await message.answer(
         text=localize_text('messages.create_name'),
         reply_markup=get_cancel_keyboard()
@@ -39,7 +38,6 @@ async def create_group(message: types.Message, state: FSMContext):
 
 @router.message(CreateGroupStates.GET_NAME)
 async def process_group_name(message: types.Message, state: FSMContext):
-    """Обробка назви групи"""
     if len(message.text) > 50:
         await message.answer(localize_text('errors.too_long', len=50))
         return
@@ -55,7 +53,6 @@ async def process_group_name(message: types.Message, state: FSMContext):
 
 @router.message(CreateGroupStates.GET_AMOUNT)
 async def process_group_amount(message: types.Message, state: FSMContext):
-    """Обробка суми оплати"""
     try:
         amount = float(message.text)
         if amount <= 0:
@@ -74,7 +71,6 @@ async def process_group_amount(message: types.Message, state: FSMContext):
 
 @router.callback_query(CreateGroupStates.GET_PERIOD, F.data.in_([PaymentPeriod.DAILY, PaymentPeriod.WEEKLY, PaymentPeriod.MONTHLY]))
 async def process_payment_period(callback: CallbackQuery, state: FSMContext):
-    """Обробка вибору періоду оплати з кнопок"""
     await state.update_data(period=callback.data)
     await callback.answer()
     await callback.message.edit_reply_markup()
@@ -86,9 +82,8 @@ async def process_payment_period(callback: CallbackQuery, state: FSMContext):
     await state.set_state(CreateGroupStates.GET_PERIOD_ORDER)
 
 
-@router.callback_query(CreateGroupStates.GET_PERIOD_ORDER, F.data.in_([PaymentMethod.EACH_USER, PaymentMethod.TURN_RANDOM, PaymentMethod.TURN_JOIN_DATE]))
+@router.callback_query(CreateGroupStates.GET_PERIOD_ORDER, F.data.in_([PaymentMethod.FROM_EACH_USER, PaymentMethod.IN_TURN_RANDOMLY, PaymentMethod.IN_TURN_BY_JOIN_DATE]))
 async def process_payment_order(callback: CallbackQuery, state: FSMContext):
-    """Обробка вибору періоду оплати з кнопок"""
     await state.update_data(period_order=callback.data)
     await callback.answer()
     await callback.message.edit_reply_markup()
@@ -102,22 +97,24 @@ async def process_payment_order(callback: CallbackQuery, state: FSMContext):
 
 @router.message(CreateGroupStates.GET_PAYMENT_DATE)
 async def process_payment_date(message: types.Message, state: FSMContext):
-    """Обробка дати оплати"""
     try:
         user_date = datetime.strptime(message.text, "%d.%m")
         next_payment_date = user_date.replace(year=date.today().year)
 
         if next_payment_date.date() < date.today():
-            data = await state.get_data()
-            period = PaymentPeriod[data.get("period", "MONTHLY").upper()]
-            now = datetime.now()
+            next_payment_date = user_date.replace(month=date.today().month)
 
-            if period == PaymentPeriod.DAILY:
-                next_payment_date = now + timedelta(days=1)
-            elif period == PaymentPeriod.WEEKLY:
-                next_payment_date = now + timedelta(weeks=1)
-            elif period == PaymentPeriod.MONTHLY:
-                next_payment_date = now + timedelta(days=DAYS_IN_SUBSCRIPTION_MONTH)
+            if next_payment_date.date() <= date.today():
+                data = await state.get_data()
+                period = PaymentPeriod[data.get("period", "MONTHLY").upper()]
+                now = next_payment_date
+
+                if period == PaymentPeriod.DAILY:
+                    next_payment_date = now + timedelta(days=1)
+                elif period == PaymentPeriod.WEEKLY:
+                    next_payment_date = now + timedelta(weeks=1)
+                elif period == PaymentPeriod.MONTHLY:
+                    next_payment_date = now + timedelta(days=DAYS_IN_SUBSCRIPTION_MONTH)
 
         await state.update_data(payment_date=next_payment_date)
 
@@ -132,7 +129,6 @@ async def process_payment_date(message: types.Message, state: FSMContext):
 
 @router.message(CreateGroupStates.GET_COMMENT)
 async def process_group_comment(message: types.Message, state: FSMContext):
-    """Обробка коментаря та завершення створення групи"""
     await state.update_data(comment=message.text)
     await state.update_data(join_id=generate_join_id())
 
@@ -145,7 +141,6 @@ async def process_group_comment(message: types.Message, state: FSMContext):
 
 @router.callback_query(CreateGroupStates.CONFIRM, F.data.in_(['yes']))
 async def confirm_create(callback: CallbackQuery, state: FSMContext):
-    """Обробка вибору періоду оплати з кнопок"""
     try:
         data = await state.get_data()
 
@@ -155,12 +150,8 @@ async def confirm_create(callback: CallbackQuery, state: FSMContext):
         owner_tag = f"@{username}" if username else full_name or str(user_id)
 
         current_payment_date = data.get("payment_date")
-
-        payment_period_key = data.get("period", "MONTHLY").upper(),
+        payment_period_key = data.get("period", "monthly").upper(),
         payment_period = PaymentPeriod[payment_period_key[0]]
-        period_delta = get_period_delta(payment_period)
-
-        next_payment_date: datetime = data.get("payment_date") + period_delta
 
         obj: GroupModel = GroupModel.from_dict({
                 "name": data["name"],
@@ -169,9 +160,8 @@ async def confirm_create(callback: CallbackQuery, state: FSMContext):
                 "description": data.get("comment"),
                 "amount": float(data.get("amount", 0)),
                 "payment_period": payment_period,
-                "payment_method": PaymentMethod[data.get("method", "EACH_USER").upper()],
+                "payment_method": PaymentMethod[data.get("period_order", "from_each_user").upper()],
                 "current_payment_date": current_payment_date,
-                "next_payment_date": next_payment_date,
                 "join_id": data.get('join_id'),
         })
 
@@ -194,7 +184,6 @@ async def confirm_create(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(CreateGroupStates.CONFIRM, F.data.in_(['no']))
 async def decline_create(callback: CallbackQuery, state: FSMContext):
-    """Обробка вибору періоду оплати з кнопок"""
     await state.clear()
     await callback.answer()
     await callback.message.edit_reply_markup()

@@ -21,22 +21,18 @@ class TelegramBot:
         print("Bot inited!")
 
     async def _register_routers(self):
-        """Реєстрація всіх роутерів"""
         for router in handler_routers:
             self.dp.include_router(router)
         for router in handler_services:
             self.dp.include_router(router)
 
     async def _on_startup(self):
-        """Дії при запуску бота"""
         await set_bot_commands(self.bot)
 
     async def _on_shutdown(self):
-        """Дії при зупинці бота"""
         await self.storage.close()
 
     async def start(self):
-        """Запуск бота"""
         await self._register_routers()
 
         self.dp.startup.register(self._on_startup)
@@ -53,7 +49,6 @@ class TelegramBot:
 
 
 def run_bot():
-    """Запуск бота з asyncio"""
     bot = TelegramBot()
 
     try:

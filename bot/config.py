@@ -4,13 +4,6 @@ from aiogram import Bot
 
 
 async def set_bot_commands(bot: Bot):
-    """
-    Встановлює команди головного меню бота
-
-    Args:
-        bot: Екземпляр бота aiogram
-    """
-    # Список команд з їх описом
     commands = [
         BotCommand(
             command="/start",
@@ -22,5 +15,4 @@ async def set_bot_commands(bot: Bot):
         ),
     ]
 
-    # Встановлюємо команди
     await bot.set_my_commands(commands)

@@ -16,25 +16,6 @@ def build_inline_keyboard(
         row_width: int = 2,
         adjust: Optional[List[int]] = None
 ) -> InlineKeyboardMarkup:
-    """
-    Динамічно створює Inline клавіатуру
-
-    Args:
-        buttons: Список кнопок у форматі:
-            [
-                {
-                    "text": "button.text.key",  # або просто текст
-                    "callback_data": "action",
-                    "url": "https://example.com"  # опціонально
-                },
-                ...
-            ]
-        row_width: Кількість кнопок у рядку
-        adjust: Custom row sizing (e.g., [1, 2, 1] for rows)
-
-    Returns:
-        InlineKeyboardMarkup
-    """
     builder = InlineKeyboardBuilder()
 
     for button in buttons:
@@ -65,19 +46,6 @@ def build_reply_keyboard(
         one_time_keyboard: bool = False,
         adjust: Optional[List[int]] = None
 ) -> ReplyKeyboardRemove | ReplyKeyboardMarkup:
-    """
-    Динамічно створює Reply клавіатуру
-
-    Args:
-        buttons: Список кнопок (або текст, або словник з ключем 'text')
-        row_width: Кількість кнопок у рядку
-        resize_keyboard: Чи змінювати розмір клавіатури
-        one_time_keyboard: Чи ховати клавіатурі після вибору
-        adjust: Custom row sizing (e.g., [1, 2, 1] for rows)
-
-    Returns:
-        ReplyKeyboardMarkup
-    """
     if not buttons:
         return ReplyKeyboardRemove()
 

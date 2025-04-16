@@ -7,9 +7,9 @@ class PaymentPeriod(str, Enum):
 
 
 class PaymentMethod(str, Enum):
-    EACH_USER = "from_each_user"
-    TURN_RANDOM = "in_turn_randomly"
-    TURN_JOIN_DATE = "in_turn_by_join_date"
+    FROM_EACH_USER = "from_each_user"
+    IN_TURN_RANDOMLY = "in_turn_randomly"
+    IN_TURN_BY_JOIN_DATE = "in_turn_by_join_date"
 
 
 class PaymentStatus(str, Enum):

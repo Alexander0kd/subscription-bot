@@ -1,4 +1,4 @@
-from db.crud import get_group_by_join_id
+from db.crud import get_group_by_join_id, add_member
 from translation import localize_text
 from bot.keyboards import get_main_keyboard, get_admin_join_keyboard
 from aiogram import types
@@ -23,8 +23,7 @@ async def handle_join(message: types.Message):
 
 
     if group.owner_id:
-        can_join = not(any(member.user_id == message.from_user.id for member in group.members) or
-                     group.owner_id == message.from_user.id)
+        can_join = not(any(member.user_id == message.from_user.id for member in group.members))
 
         if not can_join:
             await message.answer(
@@ -38,16 +37,23 @@ async def handle_join(message: types.Message):
         user_id = message.from_user.id
         owner_tag = f"@{username}" if username else full_name or str(user_id)
 
-        await message.bot.send_message(
-            chat_id=group.owner_id,
-            text=localize_text('commands.join.request', name=group.name, user=owner_tag),
-            reply_markup=get_admin_join_keyboard(user_id, join_id, owner_tag)
-        )
+        if message.from_user.id != group.owner_id:
+            await message.bot.send_message(
+                chat_id=group.owner_id,
+                text=localize_text('commands.join.request', name=group.name, user=owner_tag),
+                reply_markup=get_admin_join_keyboard(user_id, join_id, owner_tag)
+            )
 
-        await message.answer(
-            localize_text('commands.join.wait', name=group.name),
-            reply_markup=get_main_keyboard()
-        )
+            await message.answer(
+                localize_text('commands.join.wait', name=group.name),
+                reply_markup=get_main_keyboard()
+            )
+        else:
+            await add_member(group, user_id, owner_tag)
+            await message.answer(
+                localize_text('messages.done', name=group.name),
+                reply_markup=get_main_keyboard()
+            )
     else:
         await message.answer(
             localize_text('errors.general'),

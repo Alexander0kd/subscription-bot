@@ -1,7 +1,7 @@
 from aiogram.fsm.context import FSMContext
 
 from db.crud import get_group_by_join_id
-from db.crud.group_crud import mark_payment, leave_group, delete_group, update_group
+from db.crud.group_crud import mark_payment, leave_group, delete_group, update_group, add_member
 from db.models import PaymentStatus
 from translation import localize_text
 from aiogram import Router, types, F
@@ -9,14 +9,13 @@ from bot.keyboards import (
     get_main_keyboard, get_user_group_keyboard, get_admin_settings_keyboard, get_group_members_keyboard,
     get_admin_group_keyboard,
 )
-from utils import get_localized_group_user
+from utils import get_localized_group_user, get_localized_joined_groups
 from aiogram.fsm.state import StatesGroup, State
 
 router = Router()
 
 @router.callback_query(F.data == "cancel")
 async def callback_cancel(callback: types.CallbackQuery, state: FSMContext):
-    """Кнопка Cancel"""
     await state.clear()
 
     await callback.message.answer(
@@ -28,7 +27,7 @@ async def callback_cancel(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("mark_as_payed:"))
-async def handle_mark_as_payed(callback: types.CallbackQuery, pre_user_id: str = None, toggle: bool = False):
+async def handle_mark_as_payed(callback: types.CallbackQuery, pre_user_id: int = None, toggle: bool = False):
     group_id = callback.data.split(":")[1]
     user_id = pre_user_id or callback.from_user.id
 
@@ -39,24 +38,35 @@ async def handle_mark_as_payed(callback: types.CallbackQuery, pre_user_id: str =
         await callback.answer()
         return
 
-    group.members.sort(key=lambda m: 0 if m.user_id == user_id else 1)
-
+    group.members = sorted(group.members, key=lambda m: 1 if str(m.user_id) == str(user_id) else 0, reverse=True)
     await mark_payment(group, user_id, toggle)
 
-    if not toggle:
+    if not toggle and user_id != group.owner_id:
         await callback.message.bot.send_message(
             chat_id=group.owner_id,
-            text=localize_text('messages.admin_payed', user_id=group.owner_tag),
+            text=localize_text('messages.admin_payed', user_id=group.owner_tag, name=group.name),
         )
 
-    await callback.message.edit_reply_markup(
-        reply_markup=get_user_group_keyboard(
-            PaymentStatus.UNPAID if group.members[0].status == PaymentStatus.PAID else PaymentStatus.PAID,
-            group_id
+    if toggle:
+        await callback.message.edit_text(
+            text=get_localized_group_user(group, group.members[0]),
+            reply_markup=get_group_members_keyboard(
+                payed=group.members[0].status == PaymentStatus.PAID,
+                user_id=user_id,
+                group_id=group_id,
+            )
         )
-    )
+    else:
+        await callback.message.edit_text(
+            text=get_localized_joined_groups(group),
+            reply_markup=get_user_group_keyboard(
+                group.members[0].status,
+                group.join_id
+            )
+        )
 
-    await callback.message.answer(localize_text('messages.request'))
+    if not toggle and user_id != group.owner_id:
+        await callback.message.answer(localize_text('messages.request'))
     await callback.answer()
 
 
@@ -148,13 +158,10 @@ async def handle_remove_member(callback: types.CallbackQuery):
     await handle_leave_group(callback, user_id)
 
 
-# States
-
 class GroupStates(StatesGroup):
     AWAITING_AMOUNT = State()
     AWAITING_COMMENT = State()
 
-# Change Amount
 @router.callback_query(F.data.startswith("change_amount:"))
 async def handle_change_amount(callback: types.CallbackQuery, state: FSMContext):
     group_id = callback.data.split(":")[1]
@@ -189,7 +196,6 @@ async def process_new_amount(message: types.Message, state: FSMContext):
         await message.answer(localize_text('errors.nan'))
 
 
-# Change Comment
 @router.callback_query(F.data.startswith("change_comment:"))
 async def handle_change_comment(callback: types.CallbackQuery, state: FSMContext):
     group_id = callback.data.split(":")[1]
@@ -250,7 +256,7 @@ async def handle_approve(callback: types.CallbackQuery):
     group = await get_group_by_join_id(group_id)
 
     if group and callback.from_user.id == group.owner_id:
-        await group.add_member(user_id, user_tag)
+        await add_member(group, user_id, user_tag)
 
         await callback.message.bot.send_message(
             chat_id=group.owner_id,

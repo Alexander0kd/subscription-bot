@@ -8,7 +8,6 @@ from translation import localize_text
 
 
 async def get_my_groups(message: types.Message):
-    """Початок створення групи"""
     groups = await get_by_owner(message.from_user.id)
 
     if len(groups) <= 0:
