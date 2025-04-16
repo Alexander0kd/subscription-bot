@@ -2,3 +2,4 @@ aiogram
 dotenv
 python-dotenv
 pymongo
+apscheduler

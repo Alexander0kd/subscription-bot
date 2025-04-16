@@ -13,4 +13,5 @@ MONGO_URI='string'; 'mongodb://localhost:27017'
 MONGO_DB_NAME='string'; 'subscription_bot'
 
 TELEGRAM_BOT_TOKEN='string'
+DEV_USER_ID='int'
 ```

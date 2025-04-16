@@ -13,6 +13,10 @@ async def set_bot_commands(bot: Bot):
             command="/join",
             description=localize_text('commands.join.title')
         ),
+        BotCommand(
+            command="/chrono",
+            description=localize_text('commands.chrono.title')
+        )
     ]
 
     await bot.set_my_commands(commands)

@@ -1,5 +1,6 @@
 from .cmd_start import handle_start
 from .cmd_join import handle_join
+from .cmd_chrono import handle_chrono
 
 from .btn_create import create_group
 from .btn_groups import get_my_groups
@@ -12,6 +13,7 @@ __all__ = [
 
     'handle_start',
     'handle_join',
+    'handle_chrono',
 
     'create_group',
     'get_my_groups',

@@ -101,3 +101,9 @@ async def add_member(group: GroupModel, user_id: int, user_tag: str):
         new_member = get_default_member(user_id, user_tag)
         group.members.append(new_member)
         await update_group(group)
+
+
+async def get_all_groups_by_date(date: datetime = datetime.now()) -> List[GroupModel]:
+    group_data = db[COLLECTION_NAME].find({ "current_payment_date": { "$lte": date } })
+    return [GroupModel.from_dict(dict(g)) for g in group_data]
+
