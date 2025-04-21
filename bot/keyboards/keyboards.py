@@ -202,7 +202,7 @@ def get_mark_as_paid_keyboard(group_id: str) -> InlineKeyboardMarkup:
     return build_inline_keyboard(
         buttons=[
             {
-                "text": "buttons.payed",
+                "text": "buttons.mark_as_payed",
                 "callback_data": f"payed:{group_id}"
             }
         ],

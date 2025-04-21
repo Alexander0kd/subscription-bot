@@ -5,7 +5,7 @@ from bson import ObjectId
 from db.models import PaymentPeriod, PaymentMethod, PaymentStatus
 from db.models.member_model import MemberModel, get_default_member
 from db.utils import generate_join_id
-from utils import get_period_delta
+from utils import get_period_delta, stable_hash
 
 
 class GroupModel:
@@ -93,9 +93,16 @@ class GroupModel:
         return result
 
 
-    def get_next_payment_date(self, user: MemberModel) -> datetime:
-        import hashlib
+    def should_user_pay(self, user: MemberModel) -> bool:
+        date = self.get_next_payment_date(user)
 
+        return (
+            date <= datetime.now() and
+            user.status == PaymentStatus.UNPAID
+        )
+
+
+    def get_next_payment_date(self, user: MemberModel) -> datetime:
         period_delta = get_period_delta(self.payment_period)
 
         if self.payment_method == PaymentMethod.FROM_EACH_USER:
@@ -111,25 +118,16 @@ class GroupModel:
                 ordered = sorted(old_members, key=lambda m: m.joined_at) + sorted(new_members, key=lambda m: m.joined_at)
 
             else:
-                def stable_hash(u: int) -> int:
-                    return int(hashlib.md5(str(u).encode()).hexdigest(), 16)
-
                 ordered = sorted(old_members, key=lambda m: stable_hash(m.user_id))
 
-            try:
-                index = next(i - 1 for i, m in enumerate(ordered) if m.user_id == user.user_id)
-                if index < 0:
-                    all_ordered = sorted(old_members, key=lambda m: stable_hash(m.user_id)) + \
-                                  sorted(new_members, key=lambda m: stable_hash(m.user_id))
+            index = next((i for i, m in enumerate(ordered) if str(m.user_id) == str(user.user_id)), None)
+            if index is None:
+                all_ordered = sorted(old_members, key=lambda m: stable_hash(m.user_id)) + \
+                              sorted(new_members, key=lambda m: stable_hash(m.user_id))
 
-                    next_payment_month_index = next(i - 1 for i, m in enumerate(all_ordered) if m.user_id == user.user_id)
-
-                    return self.current_payment_date + (len(ordered) + next_payment_month_index) * period_delta
-            except StopIteration:
-                return self.current_payment_date
-
-            base_date = self.current_payment_date
-            return base_date + index * period_delta
+                next_payment_month_index = next(i for i, m in enumerate(all_ordered) if str(m.user_id) == str(user.user_id))
+                return self.current_payment_date + (len(ordered) + next_payment_month_index) * period_delta
+            return self.current_payment_date + index * period_delta
 
         return self.current_payment_date
 

@@ -52,8 +52,8 @@ async def get_by_member(member_id: int) -> List[GroupModel]:
     for group in converted:
         members = group.members or []
 
-        main_member = [m for m in members if m.user_id == member_id]
-        other_members = [m for m in members if m.user_id != member_id]
+        main_member = [m for m in members if str(m.user_id) == str(member_id)]
+        other_members = [m for m in members if str(m.user_id) != str(member_id)]
 
         group.members = main_member + other_members
         result.append(group)
@@ -62,7 +62,7 @@ async def get_by_member(member_id: int) -> List[GroupModel]:
 
 
 async def leave_group(group: GroupModel, user_id: int):
-    group.members = [member for member in group.members if member.user_id != user_id]
+    group.members = [member for member in group.members if str(member.user_id) != str(user_id)]
     await update_group(group)
 
 
@@ -94,7 +94,7 @@ async def delete_group(group: GroupModel):
 
 async def add_member(group: GroupModel, user_id: int, user_tag: str):
     def _find_member(find_user_id: int) -> Optional[MemberModel]:
-        return next((m for m in group.members if m.user_id == find_user_id), None)
+        return next((m for m in group.members if str(m.user_id) == str(find_user_id)), None)
 
     existing_member = _find_member(user_id)
     if not existing_member:
